@@ -1,0 +1,26 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - curl -sL https://deb.nodesource.com/setup_10.x | bash -
+      - apt-get install -y nodejs
+      - npm install -g @adben002/cfn-yaml-value-injector
+      - (cd app/content && npm install)
+  pre_build:
+    commands:
+      - mkdir output/ temp/
+      - BUILD_ID="$(date '+%s')"
+      - paramOps=$(echo 'env -0 | while IFS="=" read -r -d "" n v; do if [[ $n =~ ^ENV* ]]; then echo -e --param.Mappings.Constants.InstanceValues.${n}="${v}"; fi ; done' | bash)
+  build:
+    commands:
+      - echo "$paramOps"
+      - echo cfn-yaml-value-injector --input='app/main.yaml' --output='temp/main.yaml' --param.Mappings.Constants.InstanceValues.ENVBuildId="${BUILD_ID}" --param.Mappings.Constants.InstanceValues.ENVIndexDoc="${BUILD_ID}/index.html" "$(echo $paramOps)" | bash
+      - aws cloudformation package --template temp/main.yaml --s3-bucket ${ENVBucketName} --output-template output/main.yaml
+      - (cd app/content/ && npm run build -- --env.buildId="${BUILD_ID}")
+      - mv  app/content/dist/ output/
+  post_build:
+    commands:
+      - aws s3 sync output/dist/ "s3://${ENVDomainName}" || ":"
+artifacts:
+  files:
+    - output/main.yaml
