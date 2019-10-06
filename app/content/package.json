@@ -1,7 +1,11 @@
 {
   "name": "adben002-cv-website",
   "version": "1.0.0",
+  "description": "Adam Bennett CV",
+  "repository": "https://github.com/adben002/cvwebsite",
+  "license": "MIT",
   "scripts": {
+    "all": "npm run build",
     "build": "rm -rf dist/ && webpack"
   },
   "devDependencies": {
@@ -16,6 +20,8 @@
     "html-webpack-template": "^6.2.0",
     "uuid": "^3.3.2",
     "webpack": "^4.29.3",
-    "webpack-cli": "^3.2.3"
+    "webpack-cli": "^3.2.3",
+    "puppeteer": "^1.20.0",
+    "express": "^4.17.1"
   }
 }

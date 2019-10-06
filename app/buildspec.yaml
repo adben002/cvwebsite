@@ -16,7 +16,7 @@ phases:
       - echo "$paramOps"
       - echo cfn-yaml-value-injector --input='app/main.yaml' --output='temp/main.yaml' --param.Mappings.Constants.InstanceValues.ENVBuildId="${BUILD_ID}" --param.Mappings.Constants.InstanceValues.ENVIndexDoc="${BUILD_ID}/index.html" "$(echo $paramOps)" | bash
       - aws cloudformation package --template temp/main.yaml --s3-bucket ${ENVBucketName} --output-template output/main.yaml
-      - (cd app/content/ && npm run build -- --env.buildId="${BUILD_ID}")
+      - (cd app/content/ && npm run build -- --env.buildId="${BUILD_ID}" && buildId="${BUILD_ID}" node pdf.js)
       - mv  app/content/dist/ output/
   post_build:
     commands:

@@ -35,13 +35,21 @@
         a {
             color: #0055B3
         }
+
         .list-group-item:first-child {
-            border-top-left-radius:0;
-            border-top-right-radius:0;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
         }
-        .list-group-item:last-child{
-            border-bottom-right-radius:0;
-            border-bottom-left-radius:0;
+
+        .list-group-item:last-child {
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        @media print {
+            div {
+                page-break-inside: avoid;
+            }
         }
     </style>
 
@@ -53,11 +61,16 @@
         <div class="col-12">
             <h1 class="mt-5">Adam Bennett</h1>
         </div>
-        <div class="col-12">
+        <div class="col-11">
             <h5>
                 Contract Java and JavaScript Developer -
                 <a href="mailto:adben002@gmail.com">adben002@gmail.com</a>
             </h5>
+        </div>
+        <div class="col-1">
+            <a class="export-hidden" href="<%= baseUrl %>/AdamBennettCV.pdf" download>
+                <i class="fa fa-download" aria-hidden="true"></i>
+            </a>
         </div>
     </div>
     <div class="row mt-4">
@@ -269,7 +282,7 @@
             </div>
         </div>
     </div>
-    <div class="row mt-4">
+    <div class="row mt-4 export-hidden">
         <div class="col-12">
             <h3>
                 <i class="fas fa-graduation-cap text-grey-color"></i>
@@ -277,7 +290,7 @@
             </h3>
         </div>
     </div>
-    <div class="col-12 mt-2">
+    <div class="col-12 mt-2 export-hidden">
         <div class="card">
             <h4 class="card-header bg-success">
                 <a target="_blank" rel="noopener" href="http://www.bath.ac.uk/" class="text-white">University of
@@ -303,8 +316,8 @@
             </div>
         </div>
     </div>
-    <hr>
-    <div class="row mt-4">
+    <hr class="export-hidden">
+    <div class="row mt-4 export-hidden">
         <div class="col text-center">
             <a aria-label="Twitter" target="_blank" rel="noopener" href="https://twitter.com/adben002">
                 <i class="fab fa-twitter fa-3x mr-3"></i>
