@@ -3,7 +3,7 @@ const fs = require('fs');
 const express = require('express');
 
 async function printPDF() {
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox']});
     const page = await browser.newPage();
     await page.goto('http://localhost:3000/index-' + process.env.buildId + '.html', {waitUntil: 'networkidle0'});
     await page.addStyleTag({content: '.export-hidden {display: none}'});
