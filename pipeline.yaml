@@ -9,6 +9,10 @@ Parameters:
 
 Resources:
 
+  LambdaCodeStoreBucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+
   # Role for CodePipeline
   CodePipelineRoleqwq:
     Type: AWS::IAM::Role
@@ -292,20 +296,6 @@ Resources:
               RunOrder: 1
         - Name: DeployLambda
           Actions:
-            - Name: DeployPipeline
-              InputArtifacts:
-                - Name: RepoSourceasdasdas
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Version: 1
-                Provider: CloudFormation
-              Configuration:
-                ActionMode: CREATE_UPDATE
-                StackName: 'asdsadasdsad-codepipeline'
-                TemplatePath: RepoSourceasdasdas::lambda-bucket.yaml
-                RoleArn: !GetAtt SitePipeLineRoleasd.Arn
-              RunOrder: 1
             - Name: CodeBuild
               InputArtifacts:
                 - Name: RepoSourceasdasdas
@@ -328,7 +318,7 @@ Resources:
                 Provider: S3
                 Version: 1
               Configuration:
-                BucketName: !ImportValue LambdaCodeBucket
+                BucketName: !Ref LambdaCodeStoreBucket
                 Extract: true
                 ObjectKey: certificate-validator
               RunOrder: 2
@@ -382,3 +372,9 @@ Resources:
                 BucketName: !Ref DomainName
                 Extract: true
               RunOrder: 5
+Outputs:
+  BucketName:
+    Value: !Ref LambdaCodeStoreBucket
+    Description: Bucket name
+    Export:
+      Name: LambdaCodeBucket
