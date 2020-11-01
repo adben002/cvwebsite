@@ -1,57 +1,127 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: CV Website Pipeline stack
+
 Parameters:
+  SourceStorageBucketName:
+    Type: String
   DomainName:
-    Description: The site domain name (non www).
     Type: String
-    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<![.-])
-    ConstraintDescription: Must be a valid domain name.
-  GitHubOwner:
-    Description: GitHub account username.
-    Type: String
-  GitHubRepo:
-    Description: Static site repo name.
-    Type: String
-  GitHubBranch:
-    Description: The branch that will trigger build/deploy.
-    Type: String
-    Default: master
-  GitHubOAuthToken:
-    Description: OAuth or personal access token.
-    Type: String
-    NoEcho: true
+    Description: The base domain name for the web site (no 'www')
+
 Resources:
+
+  # Role for CodePipeline
+  CodePipelineRoleqwq:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: AccessPipelineBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}'
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}/*'
+        - PolicyName: CloudformationPipelineDeployment
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/asdsadasdsad-codepipeline/*'
+        - PolicyName: RunBuild
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource: !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${AWS::StackName}-LambdaBuilder'
+        - PolicyName: RunBuild2
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+                Resource: !Sub 'arn:${AWS::Partition}:codebuild:${AWS::Region}:${AWS::AccountId}:project/${AWS::StackName}-SiteSourceBuilder'
+        - PolicyName: PassOntoSiteRole
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt SitePipeLineRoleasd.Arn
+        - PolicyName: LambdaCodeBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::*/*'
+
+  SitePipeLineRoleasd:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [cloudformation.amazonaws.com]
+            Action: sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/job-function/SystemAdministrator
+
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Sid: ''
-          Effect: Allow
-          Principal:
-            Service:
-            - codebuild.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
-  CodeBuildRolePolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: CodeBuildRolePolicy
-      PolicyDocument:
-        Statement:
-        - Effect: Allow
-          Resource:
-          - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
-          Action:
-          - logs:CreateLogGroup
-          - logs:CreateLogStream
-          - logs:PutLogEvents
-        - Effect: Allow
-          Resource: "*"
-          Action:
-          - s3:*
-      Roles:
-      - Ref: CodeBuildRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BuildLog
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${AWS::StackName}-LambdaBuilder:log-stream:*'
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+        - PolicyName: AccessPipelineBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}'
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}/*'
+
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -59,294 +129,256 @@ Resources:
         Type: CODEPIPELINE
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/ubuntu-base:14.04
+        Image: aws/codebuild/standard:4.0
         Type: LINUX_CONTAINER
-        EnvironmentVariables:
-        - Name: ENVDomainName
-          Value: !Sub "${DomainName}"
-        - Name: ENVBucketName
-          Value: !Ref ArtifactBucket
-      Name: !Sub "${AWS::StackName}-StaticSiteBuilder"
+      Name: !Sub "${AWS::StackName}-LambdaBuilder"
       ServiceRole: !Ref CodeBuildRole
       Source:
         Type: CODEPIPELINE
-        BuildSpec: ./app/buildspec.yaml
-      Tags:
-      - Key: Stack
-        Value: !Ref AWS::StackName
-      TimeoutInMinutes: 10
-  CodePipelineRole:
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            build:
+              commands:
+                - cd certificateValidator/
+                - zip certificateValidator.zip *
+
+          artifacts:
+            files:
+              - certificateValidator/certificateValidator.zip
+            discard-paths: yes
+
+
+  CodeBuildRole2:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Sid: ''
-          Effect: Allow
-          Principal:
-            Service:
-            - codepipeline.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
-  CodePipelineRolePolicy:
-    Type: AWS::IAM::Policy
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BuildLog
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${AWS::StackName}-SiteSourceBuilder:log-stream:*'
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+        - PolicyName: AccessPipelineBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}'
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}/*'
+
+  CodeBuild2:
+    Type: AWS::CodeBuild::Project
     Properties:
-      PolicyName: CodePipelineRolePolicy
-      PolicyDocument:
-        Statement:
-        - Action:
-          - s3:GetObject
-          - s3:GetObjectVersion
-          - s3:GetBucketVersioning
-          Resource: "*"
-          Effect: Allow
-        - Action:
-          - s3:PutObject
-          Resource: "*"
-          Effect: Allow
-        - Action:
-          - codebuild:BatchGetBuilds
-          - codebuild:StartBuild
-          Resource: "*"
-          Effect: Allow
-        - Action: ["cloudformation:*"]
-          Resource: "*"
-          Effect: Allow
-        - Action: ["iam:PassRole"]
-          Resource: "*"
-          Effect: Allow
-      Roles:
-      - !Ref CodePipelineRole
-  CloudFormationTrustRole:
-    Description: Creating service role in IAM for AWS CloudFormation
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        Type: LINUX_CONTAINER
+      Name: !Sub "${AWS::StackName}-SiteSourceBuilder"
+      ServiceRole: !Ref CodeBuildRole2
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 12
+              commands:
+                - cd ui/
+                - npm ci
+            build:
+              commands:
+                - npm run build
+
+          artifacts:
+            files:
+              - '**/*'
+            base-directory: 'ui/build'
+
+  SourceCodePipelineCloudformationDeploymentRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "${AWS::StackName}-cloudformation-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt CodePipelineRoleqwq.Arn
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SourceCodePipelineCloudformationDeploymentPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                Resource: !Sub 'arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}-static-website/*'
+        - PolicyName: SourceCodePipelineCloudformationPassOntoStackPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt StackDeploymentRole.Arn
+        - PolicyName: AccessPipelineBucket
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}'
+              - Effect: Allow
+                Action: s3:*
+                Resource: !Sub 'arn:${AWS::Partition}:s3:::${SourceStorageBucketName}/*'
+
+  StackDeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
       AssumeRolePolicyDocument:
         Statement:
-        - Effect: Allow
-          Principal:
-            Service: [cloudformation.amazonaws.com]
-          Action: sts:AssumeRole
-      Path: /
-  CloudFormationRolePolicy:
-    Type: AWS::IAM::Policy
-    DependsOn: CloudFormationTrustRole
-    Description: Setting IAM policy for the service role for AWS CloudFormation
-    Properties:
-      PolicyName: CloudFormationRolePolicy
-      PolicyDocument:
-        Statement:
-        - Action: ["s3:GetObject", "s3:GetObjectVersion", "s3:GetBucketVersioning", "s3:CreateBucket", "s3:PutObject", "s3:ListBucket", "s3:DeleteObject", "s3:DeleteBucket", "s3:ListBucketVersions", "s3:PutBucketAcl", "s3:PutBucketWebsite", "s3:DeleteBucketWebsite", "s3:PutBucketPolicy", "s3:DeleteBucketPolicy"]
-          Resource: "*"
-          Effect: Allow
-        - Action: ["s3:PutObject"]
-          Resource: ["arn:aws:s3:::codepipeline*"]
-          Effect: Allow
-        - Action: ["lambda:*"]
-          Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
-          Effect: Allow
-        - Action: ["apigateway:*"]
-          Resource: !Sub "arn:aws:apigateway:${AWS::Region}::*"
-          Effect: Allow
-        - Action: ["iam:GetRole", "iam:CreateRole", "iam:DeleteRole"]
-          Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/*"
-          Effect: Allow
-        - Action: ["iam:AttachRolePolicy", "iam:DetachRolePolicy"]
-          Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/*"
-          Effect: Allow
-        - Action: ["iam:PassRole", "iam:GetRole", "iam:CreateRole", "iam:DeleteRole"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["cloudformation:CreateChangeSet"]
-          Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31"
-          Effect: Allow
-        - Action: ["route53:CreateHostedZone", "route53:GetChange", "route53:ListQueryLoggingConfigs", "route53:DeleteHostedZone", "route53:ListHostedZones", "route53:ChangeResourceRecordSets", "route53:ListResourceRecordSets"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["dynamodb:DescribeTable", "dynamodb:CreateTable"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["dynamodb:CreateTable", "dynamodb:DeleteTable"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["cognito-idp:CreateUserPool", "cognito-idp:DeleteUserPool", "cognito-idp:CreateUserPoolClient", "cognito-idp:DeleteUserPoolClient"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["cloudfront:CreateDistribution", "cloudfront:TagResource", "cloudfront:GetDistribution", "cloudfront:UpdateDistribution", "cloudfront:DeleteDistribution"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["cognito-identity:CreateIdentityPool", "cognito-identity:DeleteIdentityPool", "cognito-identity:SetIdentityPoolRoles", "cognito-identity:UpdateIdentityPool"]
-          Resource: ["*"]
-          Effect: Allow
-        - Action: ["acm:RequestCertificate", "acm:DescribeCertificate", "acm:DeleteCertificate"]
-          Resource: ["*"]
-          Effect: Allow
-      Roles: [!Ref CloudFormationTrustRole]
-  CodePipeline:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  # Pipeline for running source
+  CodePipelineasdas:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !GetAtt CodePipelineRole.Arn
-      Stages:
-      - Name: Source
-        Actions:
-        - Name: SourceAction
-          ActionTypeId:
-            Category: Source
-            Owner: ThirdParty
-            Version: '1'
-            Provider: GitHub
-          OutputArtifacts:
-          - Name: StaticSiteSource
-          Configuration:
-            Owner: !Ref GitHubOwner
-            Repo: !Ref GitHubRepo
-            Branch: !Ref GitHubBranch
-            OAuthToken: !Ref GitHubOAuthToken
-          RunOrder: 1
-      - Name: Build
-        Actions:
-        - Name: CodeBuild
-          InputArtifacts:
-          - Name: StaticSiteSource
-          ActionTypeId:
-            Category: Build
-            Owner: AWS
-            Version: '1'
-            Provider: CodeBuild
-          OutputArtifacts:
-          - Name: !Sub "${AWS::StackName}-BuildArtifact"
-          Configuration:
-            ProjectName: !Ref CodeBuild
-          RunOrder: 1
-      - Name: Deploy
-        Actions:
-        - Name: create-changeset
-          InputArtifacts:
-          - Name: !Sub "${AWS::StackName}-BuildArtifact"
-          ActionTypeId:
-            Category: Deploy
-            Owner: AWS
-            Version: "1"
-            Provider: CloudFormation
-          OutputArtifacts: []
-          Configuration:
-            StackName: !Sub "${AWS::StackName}-cvwebsite-stack"
-            ActionMode: CHANGE_SET_REPLACE
-            RoleArn: !GetAtt CloudFormationTrustRole.Arn
-            ChangeSetName: pipeline-changeset
-            Capabilities: CAPABILITY_NAMED_IAM
-            TemplatePath: !Sub "${AWS::StackName}-BuildArtifact::output/main.yaml"
-          RunOrder: 1
-        - Name: execute-changeset
-          InputArtifacts: []
-          ActionTypeId:
-            Category: Deploy
-            Owner: AWS
-            Version: "1"
-            Provider: CloudFormation
-          OutputArtifacts: []
-          Configuration:
-            StackName: !Sub "${AWS::StackName}-cvwebsite-stack"
-            ActionMode: CHANGE_SET_EXECUTE
-            ChangeSetName: pipeline-changeset
-          RunOrder: 2
+      Name: 'sadifojsaiodfjiosdjf-repo-codepipeline'
+      RoleArn: !GetAtt CodePipelineRoleqwq.Arn
       ArtifactStore:
         Type: S3
-        Location: !Ref ArtifactBucket
-  ArtifactBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
-    Properties:
-      AccessControl: Private
-  TrailBucket:
-    DeletionPolicy: Retain
-    Type: "AWS::S3::Bucket"
-    Properties:
-      LifecycleConfiguration:
-        Rules:
-          -
-            Id: Expire1Day
-            ExpirationInDays: 1
-            Status: Enabled
-  BucketPolicy: 
-    Type: "AWS::S3::BucketPolicy"
-    Properties: 
-      Bucket: !Ref TrailBucket
-      PolicyDocument: 
-        Version: "2012-10-17"
-        Statement: 
-          - 
-            Sid: "AWSCloudTrailAclCheck"
-            Effect: "Allow"
-            Principal: 
-              Service: "cloudtrail.amazonaws.com"
-            Action: "s3:GetBucketAcl"
-            Resource: 
-              !Sub |-
-                arn:aws:s3:::${TrailBucket}
-          - 
-            Sid: "AWSCloudTrailWrite"
-            Effect: "Allow"
-            Principal: 
-              Service: "cloudtrail.amazonaws.com"
-            Action: "s3:PutObject"
-            Resource:
-              !Sub |-
-                arn:aws:s3:::${TrailBucket}/AWSLogs/${AWS::AccountId}/*
-            Condition: 
-              StringEquals:
-                s3:x-amz-acl: "bucket-owner-full-control"
-  CloudTrail:
-    DependsOn:
-      - BucketPolicy
-    Type: "AWS::CloudTrail::Trail"
-    Properties:
-      S3BucketName: !Ref TrailBucket
-      TrailName: TrailName
-      IsLogging: true
-  EventRule: 
-    Type: "AWS::Events::Rule"
-    Properties: 
-      Description: "EventRule"
-      EventPattern: 
-        source: 
-          - "aws.s3"
-        detail-type: 
-          - "AWS API Call via CloudTrail"
-        detail: 
-          eventSource: 
-            - "s3.amazonaws.com"
-          eventName:
-            - "CreateBucket"
-          requestParameters:
-            bucketName:
-              - !Sub "${DomainName}"
-      State: "ENABLED"
-      Targets: 
-        -
-          Id: "PipelineTarget"
-          Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}"
-          RoleArn: !GetAtt CloudWatchRole.Arn
-  CloudWatchRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-        - Sid: ''
-          Effect: Allow
-          Principal:
-            Service:
-            - events.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
-  CodeWatchRolePolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: CodeWatchRolePolicy
-      PolicyDocument:
-        Statement:
-        - Effect: Allow
-          Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipeline}"
-          Action: ["codepipeline:StartPipelineExecution"]
-      Roles:
-      - Ref: CloudWatchRole
+        Location: !Sub '${SourceStorageBucketName}'
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                S3Bucket: !Sub '${SourceStorageBucketName}'
+                S3ObjectKey: source-code
+              OutputArtifacts:
+                - Name: RepoSourceasdasdas
+              RunOrder: 1
+        - Name: DeployLambda
+          Actions:
+            - Name: DeployPipeline
+              InputArtifacts:
+                - Name: RepoSourceasdasdas
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: 'asdsadasdsad-codepipeline'
+                TemplatePath: RepoSourceasdasdas::lambda-bucket.yaml
+                RoleArn: !GetAtt SitePipeLineRoleasd.Arn
+              RunOrder: 1
+            - Name: CodeBuild
+              InputArtifacts:
+                - Name: RepoSourceasdasdas
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: sadsadsadsadsadsdretertr
+              Configuration:
+                ProjectName: !Ref CodeBuild
+              RunOrder: 1
+            - Name: CopyLambda
+              InputArtifacts:
+                - Name: sadsadsadsadsadsdretertr
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              Configuration:
+                BucketName: !ImportValue LambdaCodeBucket
+                Extract: true
+                ObjectKey: certificate-validator
+              RunOrder: 2
+            - Name: DeployStackPipeline
+              InputArtifacts:
+                - Name: RepoSourceasdasdas
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub '${AWS::StackName}-static-website'
+                TemplatePath: RepoSourceasdasdas::staticwebsite.yaml
+                ParameterOverrides: !Join
+                  - ''
+                  - - '{'
+
+                    - '"DomainName": "'
+                    - !Ref DomainName
+                    - '"'
+
+                    - '}'
+                RoleArn: !GetAtt StackDeploymentRole.Arn
+                Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+              RoleArn: !GetAtt SourceCodePipelineCloudformationDeploymentRole.Arn
+              RunOrder: 3
+            - Name: CodeBuild2
+              InputArtifacts:
+                - Name: RepoSourceasdasdas
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: oiuoiuwerioewhrioweroiwejrioerwe
+              Configuration:
+                ProjectName: !Ref CodeBuild2
+              RunOrder: 4
+            - Name: CopySite
+              InputArtifacts:
+                - Name: oiuoiuwerioewhrioweroiwejrioerwe
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: S3
+                Version: 1
+              Configuration:
+                BucketName: !Ref DomainName
+                Extract: true
+              RunOrder: 5
