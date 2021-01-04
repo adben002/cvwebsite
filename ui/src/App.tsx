@@ -27,6 +27,24 @@ function formatZeroIndexedDate(day: number, month: number, year: number) {
 
 const jobs: JobInfo[] = [
     {
+        "role": "Full stack software engineer",
+        "place": "Jisc",
+        "placeUrl": "https://www.jisc.ac.uk/",
+        range: {
+            "from": formatZeroIndexedDate(15, 6, 2018)
+        },
+        technicalScope: "Java, Google Cloud, GWT",
+        details: `
+            Developed and maintained custom applications, web applications and APIs utilising google cloud platform.
+        `,
+        keyContributions: [
+            "Developed and deployed google cloud function to transform large CSV files.",
+            "Developed new features for a custom application utilising SAML integration and GWT.",
+            "Implemented integration with seamless access iframe, while addressing web security concerns.",
+            "Uplifted Node.js google cloud function to Node.js 10."
+        ]
+    },
+    {
         "role": "Contract Software Engineer",
         "place": "Royal Bank of Scotland (RBS)",
         "placeUrl": "https://www.business.rbs.co.uk/business/ways-to-bank/bankline.html",
