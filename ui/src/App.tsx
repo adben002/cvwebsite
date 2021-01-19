@@ -117,7 +117,7 @@ const jobs: JobInfo[] = [
         technicalScope: "MySQL, Hibernate, Spring MVC, JSP, jQuery",
         details: `
             Developed full-stack web applications, collaborating with cross-functional teams to gather
-            requirements and feature specifications. Delivered bug-free code in-line with development sprints;
+            requirements and feature specifications. Delivered code in-line with development sprints;
             and wrote tests.
         `,
         keyContributions: [
