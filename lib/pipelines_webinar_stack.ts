@@ -41,7 +41,7 @@ export class CvSite extends Stack {
         action: "updateDomainNameservers",
         parameters: {
           DomainName: props.domainName,
-          Nameservers: [...Array(3).keys()].map((key) => ({
+          Nameservers: [...Array(4).keys()].map((key) => ({
             Name: Fn.select(key, zone.hostedZoneNameServers!!),
           })),
         },
