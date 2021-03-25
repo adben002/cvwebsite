@@ -36,6 +36,7 @@ export class CdkStack extends Stack {
       sourceAction: new BitBucketSourceAction({
         actionName: "GitHub",
         output: sourceArtifact,
+        codeBuildCloneOutput: true,
         owner: props.repoOwner,
         repo: props.repoName,
         branch: props.branch,
