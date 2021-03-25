@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 import { Artifact } from "@aws-cdk/aws-codepipeline";
-import { GitHubSourceAction } from "@aws-cdk/aws-codepipeline-actions";
-import { Construct, SecretValue, Stack, StackProps } from "@aws-cdk/core";
+import { BitBucketSourceAction } from "@aws-cdk/aws-codepipeline-actions";
+import { Construct, Stack, StackProps } from "@aws-cdk/core";
 import { CdkPipeline, SimpleSynthAction } from "@aws-cdk/pipelines";
 import { WebServiceStage } from "./webservice_stage";
+import { CfnConnection } from "@aws-cdk/aws-codestarconnections";
 
 export enum EnvVars {
   RepoOwner = "REPO_OWNER",
   RepoName = "REPO_NAME",
   Branch = "BRANCH",
   DomainName = "DOMAIN_NAME",
-  GithubToken = "GITHUB_TOKEN",
   CdkDefaultAccount = "CDK_DEFAULT_ACCOUNT",
   CdkDefaultRegion = "CDK_DEFAULT_REGION",
 }
@@ -19,7 +19,6 @@ export interface CdkStackProps extends StackProps {
   readonly repoOwner: string;
   readonly repoName: string;
   readonly branch?: string;
-  readonly githubToken: string;
   readonly domainName: string;
 }
 
@@ -34,13 +33,16 @@ export class CdkStack extends Stack {
       crossAccountKeys: false,
       pipelineName: "CvWebsitePipeline",
       cloudAssemblyArtifact,
-      sourceAction: new GitHubSourceAction({
+      sourceAction: new BitBucketSourceAction({
         actionName: "GitHub",
         output: sourceArtifact,
-        oauthToken: SecretValue.plainText(props.githubToken),
         owner: props.repoOwner,
         repo: props.repoName,
         branch: props.branch,
+        connectionArn: new CfnConnection(this, "CodeStarConnection", {
+          connectionName: props.domainName + "-cv-connection",
+          providerType: "GitHub",
+        }).attrConnectionArn,
       }),
       synthAction: SimpleSynthAction.standardNpmSynth({
         sourceArtifact,
@@ -57,7 +59,6 @@ export class CdkStack extends Stack {
           [EnvVars.RepoName]: { value: props.repoName },
           [EnvVars.Branch]: { value: props.branch },
           [EnvVars.DomainName]: { value: props.domainName },
-          [EnvVars.GithubToken]: { value: props.githubToken },
           [EnvVars.CdkDefaultAccount]: { value: props.env?.account },
           [EnvVars.CdkDefaultRegion]: { value: props.env?.region },
         },

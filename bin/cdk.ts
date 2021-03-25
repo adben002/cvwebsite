@@ -8,7 +8,6 @@ new CdkStack(new App(), "CdkStack", {
   repoOwner: env[EnvVars.RepoOwner]!,
   repoName: env[EnvVars.RepoName]!,
   branch: env[EnvVars.Branch],
-  githubToken: env[EnvVars.GithubToken]!,
   domainName: env[EnvVars.DomainName]!,
   env: {
     account: env[EnvVars.CdkDefaultAccount]!,
