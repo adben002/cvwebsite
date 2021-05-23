@@ -47,11 +47,28 @@ export class AppComponent {
 
   readonly jobs: JobInfo[] = [
     {
+      role: 'Technical Consultant',
+      place: 'CACI Ltd',
+      placeUrl: 'https://www.caci-iig.co.uk/index.php',
+      range: {
+        from: formatZeroIndexedDate(2, 3, 2020),
+      },
+      technicalScope: 'Python, Node, AWS, Angular',
+      details: `
+            Consulted for MetOffice Space Weather designing, developing, configuring, testing, and debugging AWS cloud-native applications. 
+        `,
+      keyContributions: [
+        'Addition of MetOffice single sign-on authentication to forecaster angular web client and API.',
+        'Suggested and implemented enhancement for the application and also continuous integration.',
+      ],
+    },
+    {
       role: 'Full stack software engineer',
       place: 'Jisc',
       placeUrl: 'https://www.jisc.ac.uk/',
       range: {
-        from: formatZeroIndexedDate(15, 6, 2018),
+        from: formatZeroIndexedDate(9, 6, 2020),
+        to: formatZeroIndexedDate(2, 3, 2020),
       },
       technicalScope: 'Java, Google Cloud, GWT',
       details: `
