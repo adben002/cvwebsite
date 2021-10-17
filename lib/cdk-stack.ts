@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import {Artifact} from "@aws-cdk/aws-codepipeline";
-import {CodeStarConnectionsSourceAction} from "@aws-cdk/aws-codepipeline-actions";
-import {Construct, Stack, StackProps} from "@aws-cdk/core";
-import {CdkPipeline, SimpleSynthAction} from "@aws-cdk/pipelines";
-import {WebServiceStage} from "./webservice_stage";
-import {CfnConnection} from "@aws-cdk/aws-codestarconnections";
+import { Artifact } from "@aws-cdk/aws-codepipeline";
+import { BitBucketSourceAction } from "@aws-cdk/aws-codepipeline-actions";
+import { Construct, Stack, StackProps } from "@aws-cdk/core";
+import { CdkPipeline, SimpleSynthAction } from "@aws-cdk/pipelines";
+import { WebServiceStage } from "./webservice_stage";
+import { CfnConnection } from "@aws-cdk/aws-codestarconnections";
 
 export enum EnvVars {
   RepoOwner = "REPO_OWNER",
@@ -33,7 +33,7 @@ export class CdkStack extends Stack {
       crossAccountKeys: false,
       pipelineName: "CvWebsitePipeline",
       cloudAssemblyArtifact,
-      sourceAction: new CodeStarConnectionsSourceAction({
+      sourceAction: new BitBucketSourceAction({
         actionName: "GitHub",
         output: sourceArtifact,
         codeBuildCloneOutput: true,
@@ -54,14 +54,14 @@ export class CdkStack extends Stack {
         // or if you have TypeScript Lambdas that need to be compiled).
         buildCommand:
           "npm run build && cd site-contents && npm run build && cd ..",
-        environment: {privileged: true},
+        environment: { privileged: true },
         environmentVariables: {
-          [EnvVars.RepoOwner]: {value: props.repoOwner},
-          [EnvVars.RepoName]: {value: props.repoName},
-          [EnvVars.Branch]: {value: props.branch},
-          [EnvVars.DomainName]: {value: props.domainName},
-          [EnvVars.CdkDefaultAccount]: {value: props.env?.account},
-          [EnvVars.CdkDefaultRegion]: {value: props.env?.region},
+          [EnvVars.RepoOwner]: { value: props.repoOwner },
+          [EnvVars.RepoName]: { value: props.repoName },
+          [EnvVars.Branch]: { value: props.branch },
+          [EnvVars.DomainName]: { value: props.domainName },
+          [EnvVars.CdkDefaultAccount]: { value: props.env?.account },
+          [EnvVars.CdkDefaultRegion]: { value: props.env?.region },
         },
       }),
     }).addApplicationStage(
