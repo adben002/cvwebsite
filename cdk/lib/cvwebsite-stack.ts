@@ -1,10 +1,6 @@
 import { SecretValue, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import {
-  CodePipeline,
-  CodePipelineSource,
-  ShellStep,
-} from 'aws-cdk-lib/pipelines';
+import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines';
 import CvWebsiteApplication from './cvwebsite-application';
 
 export default class CvWebsiteStack extends Stack {
@@ -17,6 +13,7 @@ export default class CvWebsiteStack extends Stack {
           authentication: SecretValue.secretsManager('github-token'),
         }),
         commands: [
+          'export DEPLOY=true',
           CvWebsiteStack.runNodeScripts('ci'),
           CvWebsiteStack.runNodeScripts('run build'),
           CvWebsiteStack.runNodeScripts('run lint'),
@@ -26,7 +23,9 @@ export default class CvWebsiteStack extends Stack {
       }),
     });
 
-    pipeline.addStage(new CvWebsiteApplication(this, 'ApplicationStage'));
+    if (process.env.DEPLOY === 'true') {
+      pipeline.addStage(new CvWebsiteApplication(this, 'ApplicationStage'));
+    }
   }
 
   private static runNodeScripts(script: string): string {
