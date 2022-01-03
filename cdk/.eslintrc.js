@@ -11,6 +11,7 @@ module.exports = {
       rules: {
         'no-new': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
+        'max-classes-per-file': ['error', 2],
       },
     },
   ],
