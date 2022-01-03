@@ -21,6 +21,7 @@ export default class CvWebsiteStack extends Stack {
           CvWebsiteStack.runNodeScripts('run build'),
           'cd "$CODEBUILD_SRC_DIR/cdk" && npx cdk synth',
         ],
+        primaryOutputDirectory: 'cdk/cdk.out',
       }),
     });
 
