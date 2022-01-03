@@ -10,7 +10,9 @@ export default class CvWebsiteStack extends Stack {
     const pipeline = new CodePipeline(this, 'Pipeline', {
       synth: new ShellStep('Synth', {
         input: CodePipelineSource.gitHub('adben002/cvwebsite', 'main', {
-          authentication: SecretValue.secretsManager('github-token'),
+          authentication: SecretValue.secretsManager('github-token', {
+            jsonField: 'cvwebsite',
+          }),
         }),
         commands: [
           'export DEPLOY=true',
