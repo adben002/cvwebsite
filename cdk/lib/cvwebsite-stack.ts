@@ -1,7 +1,7 @@
 import { SecretValue, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines';
-import CvWebsiteApplication from './cvwebsite-application';
+import CvWebsiteApplicationStage from './cvwebsite-application';
 
 export default class CvWebsiteStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -24,7 +24,7 @@ export default class CvWebsiteStack extends Stack {
     });
 
     if (process.env.DEPLOY === 'true') {
-      pipeline.addStage(new CvWebsiteApplication(this, 'ApplicationStage'));
+      pipeline.addStage(new CvWebsiteApplicationStage(this, 'CvWebsiteApplicationStage'));
     }
   }
 

@@ -73,10 +73,10 @@ class CvWebsiteApplicationStack extends Stack {
   }
 }
 
-export default class CvWebsiteApplication extends Stage {
+export default class CvWebsiteApplicationStage extends Stage {
   constructor(scope: Construct, id: string, props?: StageProps) {
     super(scope, id, props);
 
-    new CvWebsiteApplicationStack(this, 'cv-website-application', props);
+    new CvWebsiteApplicationStack(this, 'CvWebsiteApplicationStack', props);
   }
 }

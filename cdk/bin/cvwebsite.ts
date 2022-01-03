@@ -4,4 +4,4 @@ import * as cdk from 'aws-cdk-lib';
 import CvWebsiteStack from '../lib/cvwebsite-stack';
 
 const app = new cdk.App();
-new CvWebsiteStack(app, 'CvWebsiteStack', {});
+new CvWebsiteStack(app, 'CvWebsiteDeployStack', {});
