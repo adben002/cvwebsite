@@ -3,10 +3,11 @@ import { Construct } from 'constructs';
 import { StageProps } from 'aws-cdk-lib/core/lib/stage';
 import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
 import { CloudFrontWebDistribution, OriginAccessIdentity, ViewerCertificate } from 'aws-cdk-lib/aws-cloudfront';
-import { PublicHostedZone } from 'aws-cdk-lib/aws-route53';
+import { PublicHostedZone, RecordSet, RecordTarget, RecordType } from 'aws-cdk-lib/aws-route53';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
+import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 
 const DOMAIN_NAME = 'adben002.com';
 
@@ -47,7 +48,7 @@ class CvWebsiteApplicationStack extends Stack {
     const oai = new OriginAccessIdentity(this, 'OIA');
     websiteBucket.grantRead(oai);
 
-    new CloudFrontWebDistribution(this, 'MyDistribution', {
+    const cloudfrontDistribution = new CloudFrontWebDistribution(this, 'MyDistribution', {
       originConfigs: [
         {
           s3OriginSource: {
@@ -69,6 +70,13 @@ class CvWebsiteApplicationStack extends Stack {
     new BucketDeployment(this, 'DeployWebsite', {
       sources: [Source.asset(`${__dirname}/../../app/dist/app`)],
       destinationBucket: websiteBucket,
+    });
+
+    new RecordSet(this, 'RecordSet', {
+      recordName: DOMAIN_NAME,
+      recordType: RecordType.A,
+      target: RecordTarget.fromAlias(new CloudFrontTarget(cloudfrontDistribution)),
+      zone: publicHostedZone,
     });
   }
 }
