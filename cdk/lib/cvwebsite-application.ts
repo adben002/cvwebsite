@@ -56,6 +56,9 @@ class CvWebsiteApplicationStack extends Stack {
             originAccessIdentity: oai,
           },
           behaviors: [{ isDefaultBehavior: true }],
+          customOriginSource: {
+            domainName: DOMAIN_NAME,
+          },
         },
       ],
       viewerCertificate: ViewerCertificate.fromAcmCertificate(
