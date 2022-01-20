@@ -2,12 +2,21 @@ import { Fn, RemovalPolicy, Stack, StackProps, Stage } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { StageProps } from 'aws-cdk-lib/core/lib/stage';
 import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
-import { CloudFrontWebDistribution, OriginAccessIdentity, ViewerCertificate } from 'aws-cdk-lib/aws-cloudfront';
+import {
+  AllowedMethods,
+  CachePolicy,
+  Distribution,
+  OriginAccessIdentity,
+  PriceClass,
+  ViewerProtocolPolicy,
+} from 'aws-cdk-lib/aws-cloudfront';
 import { PublicHostedZone, RecordSet, RecordTarget, RecordType } from 'aws-cdk-lib/aws-route53';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+import { CachedMethods } from 'aws-cdk-lib/aws-cloudfront/lib/distribution';
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 
 const DOMAIN_NAME = 'adben002.com';
 
@@ -45,29 +54,28 @@ class CvWebsiteApplicationStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    const oai = new OriginAccessIdentity(this, 'OIA');
-    websiteBucket.grantRead(oai);
+    const originAccessIdentity = new OriginAccessIdentity(this, 'OIA');
+    websiteBucket.grantRead(originAccessIdentity);
 
-    const cloudfrontDistribution = new CloudFrontWebDistribution(this, 'MyDistribution', {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: websiteBucket,
-            originAccessIdentity: oai,
-          },
-          behaviors: [{ isDefaultBehavior: true }],
-          customOriginSource: {
-            domainName: DOMAIN_NAME,
-          },
-        },
-      ],
-      viewerCertificate: ViewerCertificate.fromAcmCertificate(
-        new DnsValidatedCertificate(this, 'SiteCertificate', {
-          domainName: DOMAIN_NAME,
-          hostedZone: publicHostedZone,
-          region: 'us-east-1',
-        })
-      ),
+    const cloudfrontDistribution = new Distribution(this, 'MyDistribution', {
+      domainNames: [DOMAIN_NAME],
+      defaultBehavior: {
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+        cachedMethods: CachedMethods.CACHE_GET_HEAD,
+        cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+        viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        compress: true,
+        origin: new S3Origin(websiteBucket, {
+          originAccessIdentity,
+        }),
+      },
+      defaultRootObject: 'index.html',
+      priceClass: PriceClass.PRICE_CLASS_100,
+      certificate: new DnsValidatedCertificate(this, 'SiteCertificate', {
+        domainName: DOMAIN_NAME,
+        hostedZone: publicHostedZone,
+        region: 'us-east-1',
+      }),
     });
 
     new BucketDeployment(this, 'DeployWebsite', {
