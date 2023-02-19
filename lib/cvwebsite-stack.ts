@@ -95,7 +95,7 @@ export default class CvwebsiteStack extends Stack {
     });
 
     new BucketDeployment(this, "DeployWebsite", {
-      sources: [Source.asset(`${__dirname}/../../app/dist/app`)],
+      sources: [Source.asset(`${__dirname}/client/dist`)],
       destinationBucket: websiteBucket,
     });
 
