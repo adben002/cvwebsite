@@ -1,4 +1,5 @@
-import { SecretValue, Stack, StackProps, Stage, StageProps } from "aws-cdk-lib";
+import { Stack, StackProps, Stage, StageProps } from "aws-cdk-lib";
+import { CfnConnection } from "aws-cdk-lib/aws-codestarconnections";
 import {
   CodePipeline,
   CodePipelineSource,
@@ -7,7 +8,9 @@ import {
 import { Construct } from "constructs";
 
 import CvwebsiteStack from "./cvwebsite-stack";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+
+const repoOwner = "adben002";
+const repoName = "cvwebsite";
 
 export class CvwebsitePipeline extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -17,11 +20,16 @@ export class CvwebsitePipeline extends Stack {
       synth: new ShellStep("Synth", {
         // Use a connection created using the AWS console to authenticate to GitHub
         // Other sources are available.
-        input: CodePipelineSource.gitHub("adben002/cvwebsite", "main", {
-          authentication: SecretValue.secretsManager("github-token", {
-            jsonField: "cvwebsite",
-          }),
-        }),
+        input: CodePipelineSource.connection(
+          `${repoOwner}/${repoName}`,
+          "main",
+          {
+            connectionArn: new CfnConnection(this, "CfnConnection", {
+              providerType: "GitHub",
+              connectionName: `${repoName}-github-connection`,
+            }).attrConnectionArn,
+          }
+        ),
         commands: [
           "npm ci -q",
           "cd client && npm run build",
