@@ -1,0 +1,10 @@
+.list-group-horizontal,
+> .list-group-item.list-group-item-flush:first-child:not(:last-child),
+.list-group-horizontal,
+> .list-group-item.list-group-item-flush:last-child:not(:first-child) {
+  border-radius: 0;
+}
+
+a.social-link {
+  text-decoration: none;
+}
