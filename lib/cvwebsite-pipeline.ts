@@ -30,9 +30,11 @@ export class CvwebsitePipeline extends Stack {
       }),
     });
 
-    pipeline.addStage(
-      new CvwebsiteApplicationStage(this, "CvwebsiteApplicationStage")
-    );
+    if (process.env.CODEBUILD_BUILD_ID) {
+      pipeline.addStage(
+        new CvwebsiteApplicationStage(this, "CvwebsiteApplicationStage")
+      );
+    }
   }
 }
 
