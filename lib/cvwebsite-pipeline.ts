@@ -50,6 +50,8 @@ class CvwebsiteApplicationStage extends Stage {
   constructor(scope: Construct, id: string, props?: StageProps) {
     super(scope, id, props);
 
-    new CvwebsiteStack(this, "CvwebsiteStack");
+    new CvwebsiteStack(this, "CvwebsiteStack", {
+      stackName: "CvwebsiteStack",
+    });
   }
 }
