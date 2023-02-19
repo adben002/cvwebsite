@@ -32,7 +32,7 @@ export class CvwebsitePipeline extends Stack {
         ),
         commands: [
           "npm ci -q",
-          "cd client && npm run build",
+          "cd client && npm ci -q && npm run build",
           "npx cdk synth -q",
         ],
       }),
