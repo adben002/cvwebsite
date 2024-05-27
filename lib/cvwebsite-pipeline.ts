@@ -28,7 +28,7 @@ export class CvwebsitePipeline extends Stack {
               providerType: "GitHub",
               connectionName: `${repoName}-github-connection`,
             }).attrConnectionArn,
-          }
+          },
         ),
         commands: [
           "npm ci -q",
@@ -40,7 +40,7 @@ export class CvwebsitePipeline extends Stack {
 
     if (process.env.CODEBUILD_BUILD_ID) {
       pipeline.addStage(
-        new CvwebsiteApplicationStage(this, "CvwebsiteApplicationStage")
+        new CvwebsiteApplicationStage(this, "CvwebsiteApplicationStage"),
       );
     }
   }

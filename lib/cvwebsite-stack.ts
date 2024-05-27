@@ -55,7 +55,7 @@ export default class CvwebsiteStack extends Stack {
         },
         region: "us-east-1",
         physicalResourceId: PhysicalResourceId.of(
-          "Update domain name servers of domain"
+          "Update domain name servers of domain",
         ),
       },
       policy: AwsCustomResourcePolicy.fromSdkCalls({
@@ -103,7 +103,7 @@ export default class CvwebsiteStack extends Stack {
       recordName: DOMAIN_NAME,
       recordType: RecordType.A,
       target: RecordTarget.fromAlias(
-        new CloudFrontTarget(cloudfrontDistribution)
+        new CloudFrontTarget(cloudfrontDistribution),
       ),
       zone: publicHostedZone,
     });
