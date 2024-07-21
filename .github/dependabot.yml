@@ -2,10 +2,15 @@
 version: 2
 updates:
   - package-ecosystem: npm
-    directory: /
+    directories:
+      - /
+      - /client
     schedule:
-      interval: daily
-  - package-ecosystem: npm
-    directory: /client
-    schedule:
-      interval: daily
+      interval: weekly
+      time: 05:00
+      timezone: Europe/London
+      day: tuesday
+    groups:
+      all:
+        patterns:
+          - "*"
