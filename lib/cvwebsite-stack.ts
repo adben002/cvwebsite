@@ -8,6 +8,7 @@ import {
   CachedMethods,
   CachePolicy,
   Distribution,
+  HttpVersion,
   OriginAccessIdentity,
   PriceClass,
   ViewerProtocolPolicy,
@@ -88,6 +89,7 @@ export default class CvwebsiteStack extends Stack {
       },
       defaultRootObject: "index.html",
       priceClass: PriceClass.PRICE_CLASS_100,
+      httpVersion: HttpVersion.HTTP2_AND_3,
       certificate: new Certificate(this, "SiteCertificate", {
         domainName: DOMAIN_NAME,
         validation: CertificateValidation.fromDns(publicHostedZone),
