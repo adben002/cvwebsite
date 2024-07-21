@@ -32,6 +32,7 @@ import {
   AwsCustomResourcePolicy,
   PhysicalResourceId,
 } from "aws-cdk-lib/custom-resources";
+import { CfnWebACL } from "aws-cdk-lib/aws-wafv2";
 import { Construct } from "constructs";
 
 const DOMAIN_NAME = "adben002.com";
@@ -90,6 +91,17 @@ export default class CvwebsiteStack extends Stack {
       defaultRootObject: "index.html",
       priceClass: PriceClass.PRICE_CLASS_100,
       httpVersion: HttpVersion.HTTP2_AND_3,
+      webAclId: new CfnWebACL(this, "WebACL", {
+        scope: "CLOUDFRONT",
+        defaultAction: {
+          allow: {},
+        },
+        visibilityConfig: {
+          cloudWatchMetricsEnabled: true,
+          metricName: "WebACL",
+          sampledRequestsEnabled: true,
+        },
+      }).attrArn,
       certificate: new Certificate(this, "SiteCertificate", {
         domainName: DOMAIN_NAME,
         validation: CertificateValidation.fromDns(publicHostedZone),
