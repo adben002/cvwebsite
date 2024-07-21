@@ -101,6 +101,62 @@ export default class CvwebsiteStack extends Stack {
           metricName: "WebACL",
           sampledRequestsEnabled: true,
         },
+        rules: [
+          {
+            name: "AWS-AWSManagedRulesAmazonIpReputationList",
+            priority: 0,
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: "AWS",
+                name: "AWSManagedRulesAmazonIpReputationList",
+              },
+            },
+            overrideAction: {
+              none: {},
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: "AWS-AWSManagedRulesAmazonIpReputationList",
+            },
+          },
+          {
+            name: "AWS-AWSManagedRulesCommonRuleSet",
+            priority: 1,
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: "AWS",
+                name: "AWSManagedRulesCommonRuleSet",
+              },
+            },
+            overrideAction: {
+              none: {},
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: "AWS-AWSManagedRulesCommonRuleSet",
+            },
+          },
+          {
+            name: "AWS-AWSManagedRulesKnownBadInputsRuleSet",
+            priority: 2,
+            statement: {
+              managedRuleGroupStatement: {
+                vendorName: "AWS",
+                name: "AWSManagedRulesKnownBadInputsRuleSet",
+              },
+            },
+            overrideAction: {
+              none: {},
+            },
+            visibilityConfig: {
+              sampledRequestsEnabled: true,
+              cloudWatchMetricsEnabled: true,
+              metricName: "AWS-AWSManagedRulesKnownBadInputsRuleSet",
+            },
+          },
+        ],
       }).attrArn,
       certificate: new Certificate(this, "SiteCertificate", {
         domainName: DOMAIN_NAME,
