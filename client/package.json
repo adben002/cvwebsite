@@ -10,6 +10,6 @@
   },
   "devDependencies": {
     "copyfiles": "^2",
-    "rimraf": "^5"
+    "rimraf": "^6"
   }
 }
